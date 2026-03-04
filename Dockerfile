@@ -24,4 +24,4 @@ RUN git clone https://github.com/nasa/NASTRAN-95.git codebases/nastran95
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["python", "-c", "import os; port = os.environ.get('PORT', '8000'); os.execvp('uvicorn', ['uvicorn', 'backend.app:app', '--host', '0.0.0.0', '--port', port])"]
