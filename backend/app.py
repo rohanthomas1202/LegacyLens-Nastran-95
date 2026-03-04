@@ -200,13 +200,16 @@ def stats():
 @app.post("/api/file")
 def get_file(req: FileRequest):
     """Return full file content for drill-down context."""
+    # Normalize backslashes to forward slashes for cross-platform compatibility
+    normalized_path = req.file_path.replace("\\", "/")
+
     # Search across all codebase directories
     if not CODEBASES_DIR.exists():
         raise HTTPException(status_code=404, detail="No codebases directory found")
     for codebase_dir in CODEBASES_DIR.iterdir():
         if not codebase_dir.is_dir():
             continue
-        full_path = (codebase_dir / req.file_path).resolve()
+        full_path = (codebase_dir / normalized_path).resolve()
         codebase_resolved = codebase_dir.resolve()
 
         # Security: ensure path is within codebase

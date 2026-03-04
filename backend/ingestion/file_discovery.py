@@ -20,7 +20,7 @@ def discover_files(codebase_path: str) -> list[dict]:
                 continue
 
             file_path = Path(root) / filename
-            relative_path = file_path.relative_to(codebase)
+            relative_path = file_path.relative_to(codebase).as_posix()
 
             try:
                 content = file_path.read_text(encoding="utf-8", errors="replace")
