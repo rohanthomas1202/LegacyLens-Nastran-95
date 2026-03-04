@@ -36,7 +36,7 @@ export default function App() {
         <div className="nav-links">
           <button className={tab === 'query' ? 'active' : ''} onClick={() => setTab('query')}>Query</button>
           <button className={tab === 'analysis' ? 'active' : ''} onClick={() => setTab('analysis')}>Analysis</button>
-          <button className={tab === 'graph' ? 'active' : ''} onClick={() => setTab('graph')}>Graph</button>
+          {/* Graph tab hidden until backend graph endpoints are stable */}
           <button className={tab === 'stats' ? 'active' : ''} onClick={() => setTab('stats')}>Dashboard</button>
         </div>
 
