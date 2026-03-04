@@ -1,13 +1,37 @@
+# Secrets
 .env
+
+# Python
 __pycache__/
 *.pyc
-node_modules/
-frontend/dist/
-codebases/
-logs/*.json
-logs/*.log
+*.pyo
 .venv/
 *.egg-info/
 dist/
 build/
+
+# Node
+node_modules/
+
+# Frontend build output
+frontend/dist/
+
+# Cloned codebases
+codebases/
+
+# Logs
+logs/
+
+# Test cache
 .pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Assignment PDF
+*.pdf
