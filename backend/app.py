@@ -201,6 +201,8 @@ def stats():
 def get_file(req: FileRequest):
     """Return full file content for drill-down context."""
     # Search across all codebase directories
+    if not CODEBASES_DIR.exists():
+        raise HTTPException(status_code=404, detail="No codebases directory found")
     for codebase_dir in CODEBASES_DIR.iterdir():
         if not codebase_dir.is_dir():
             continue
