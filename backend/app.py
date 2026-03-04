@@ -4,13 +4,13 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from backend.config import FRONTEND_DIST, CODEBASES_DIR
 from backend.retrieval.search import semantic_search
 from backend.retrieval.reranker import rerank_results
-from backend.retrieval.generator import generate_answer
+from backend.retrieval.generator import generate_answer, generate_answer_stream
 from backend.vector_store.pinecone_client import PineconeStore
 from backend.utils.logger import logger, CostTracker
 
@@ -196,6 +196,137 @@ def stats():
         logger.error(f"Stats failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ---------- Graph Endpoints ----------
+
+class SubgraphRequest(BaseModel):
+    name: str = None
+    depth: int = 2
+    include_common: bool = False
+
+
+@app.get("/api/graph")
+def get_graph():
+    """Return the full call graph (builds if not cached)."""
+    from backend.features.graph_builder import load_or_build_graph
+    try:
+        graph = load_or_build_graph()
+        return graph.to_dict()
+    except Exception as e:
+        logger.error(f"Graph failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graph/build")
+def build_graph():
+    """Force rebuild of the call graph cache."""
+    from backend.features.graph_builder import build_call_graph
+    try:
+        graph = build_call_graph()
+        data = graph.to_dict()
+        return {"status": "built", "stats": data["stats"]}
+    except Exception as e:
+        logger.error(f"Graph build failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/graph/subgraph")
+def subgraph(req: SubgraphRequest):
+    """Return a subgraph centered on a node."""
+    from backend.features.graph_builder import get_subgraph
+    try:
+        return get_subgraph(
+            center=req.name or "NASTRN",
+            depth=req.depth,
+            include_common=req.include_common,
+        )
+    except Exception as e:
+        logger.error(f"Subgraph failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Flow Tracer ----------
+
+class FlowTraceRequest(BaseModel):
+    source: str
+    target: str
+
+
+@app.post("/api/flow-trace")
+def flow_trace(req: FlowTraceRequest):
+    """Find shortest call path between two routines."""
+    from backend.features.flow_tracer import trace_flow
+    try:
+        return trace_flow(req.source, req.target)
+    except Exception as e:
+        logger.error(f"Flow trace failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Autocomplete ----------
+
+class AutocompleteRequest(BaseModel):
+    prefix: str
+    limit: int = 10
+
+
+@app.post("/api/autocomplete")
+def autocomplete(req: AutocompleteRequest):
+    """Search graph node names by prefix for autocomplete."""
+    from backend.features.graph_builder import load_or_build_graph
+    try:
+        graph = load_or_build_graph()
+        prefix = req.prefix.upper()
+        matches = []
+        for name, info in graph.nodes.items():
+            if name.startswith(prefix):
+                matches.append({"name": name, **info})
+                if len(matches) >= req.limit:
+                    break
+        return {"suggestions": matches, "count": len(matches)}
+    except Exception as e:
+        logger.error(f"Autocomplete failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Dead Code ----------
+
+@app.get("/api/dead-code")
+def dead_code():
+    """Detect potentially dead (unreachable) routines."""
+    from backend.features.dead_code import detect_dead_code
+    try:
+        return detect_dead_code()
+    except Exception as e:
+        logger.error(f"Dead code detection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Streaming Query ----------
+
+@app.post("/api/query/stream")
+def query_stream(req: QueryRequest):
+    """Semantic search + streamed AI answer via SSE."""
+    try:
+        results = semantic_search(
+            req.query, top_k=req.top_k, language=req.language, file_path=req.file_path
+        )
+        reranked = rerank_results(results, req.query)
+
+        cost_tracker = CostTracker()
+        cost_tracker.track_query()
+
+        return StreamingResponse(
+            generate_answer_stream(req.query, reranked),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+    except Exception as e:
+        logger.error(f"Stream query failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- File ----------
 
 @app.post("/api/file")
 def get_file(req: FileRequest):

@@ -33,6 +33,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 CODEBASES_DIR = PROJECT_ROOT / "codebases"
 LOGS_DIR = PROJECT_ROOT / "logs"
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
+GRAPH_CACHE_PATH = PROJECT_ROOT / "backend" / "graph_cache.json"
 
 # Language detection by file extension
 LANGUAGE_MAP = {

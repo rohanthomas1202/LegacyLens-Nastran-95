@@ -35,3 +35,6 @@ Thumbs.db
 
 # Assignment PDF
 *.pdf
+
+# Graph cache
+backend/graph_cache.json

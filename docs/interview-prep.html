@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegacyLens Interview Prep</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f1a;
+      color: #e0e0e0;
+      line-height: 1.7;
+      padding: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { color: #00d4ff; font-size: 2rem; margin-bottom: 8px; }
+    h2 { color: #7b68ee; font-size: 1.4rem; margin: 30px 0 12px; border-bottom: 1px solid #2a2a3a; padding-bottom: 6px; }
+    h3 { color: #00d4ff; font-size: 1.1rem; margin: 20px 0 8px; }
+    p { margin-bottom: 10px; }
+    .subtitle { color: #888; font-size: 0.95rem; margin-bottom: 30px; }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .card-header h3 { margin: 0; }
+    .toggle { color: #00d4ff; font-size: 1.2rem; }
+    .card-body { display: none; margin-top: 14px; }
+    .card.open .card-body { display: block; }
+    .card.open .toggle::after { content: '▲'; }
+    .card:not(.open) .toggle::after { content: '▼'; }
+
+    .qa { margin-bottom: 18px; }
+    .qa .q {
+      color: #ff6b6b;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .qa .a { color: #d0d0d0; padding-left: 16px; border-left: 2px solid #2a2a3a; }
+    .qa .a strong { color: #00d4ff; }
+
+    code {
+      background: #2a2a3a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #ff9f43;
+    }
+    pre {
+      background: #141420;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      padding: 14px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      margin: 10px 0;
+      color: #c0c0c0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid #2a2a3a;
+    }
+    th { color: #00d4ff; font-size: 0.85rem; text-transform: uppercase; }
+    td { color: #d0d0d0; font-size: 0.9rem; }
+
+    .tag {
+      display: inline-block;
+      background: #2a2a3a;
+      color: #00d4ff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin: 2px 4px 2px 0;
+    }
+    .highlight { background: rgba(0, 212, 255, 0.1); padding: 12px; border-radius: 6px; margin: 10px 0; }
+    .diagram { font-family: monospace; white-space: pre; font-size: 0.85rem; line-height: 1.4; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      background: #0f0f1a;
+      padding: 10px 0;
+      border-bottom: 1px solid #2a2a3a;
+      margin-bottom: 20px;
+      z-index: 100;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .nav a {
+      color: #7b68ee;
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border: 1px solid #2a2a3a;
+      border-radius: 4px;
+    }
+    .nav a:hover { background: #1a1a2e; color: #00d4ff; }
+
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>LegacyLens for NASTRAN-95</h1>
+<p class="subtitle">Interview Preparation Guide &mdash; Everything you need to know about this project</p>
+
+<nav class="nav">
+  <a href="#elevator">Elevator Pitch</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#ingestion">Ingestion</a>
+  <a href="#retrieval">Retrieval</a>
+  <a href="#chunking">Chunking</a>
+  <a href="#embedding">Embedding</a>
+  <a href="#vectordb">Vector DB</a>
+  <a href="#features">Features</a>
+  <a href="#frontend">Frontend</a>
+  <a href="#costs">Costs</a>
+  <a href="#decisions">Key Decisions</a>
+  <a href="#challenges">Challenges</a>
+  <a href="#testing">Testing</a>
+  <a href="#deployment">Deployment</a>
+  <a href="#questions">Common Questions</a>
+  <a href="#deep">Deep Dive Q&A</a>
+</nav>
+
+<!-- ==================== ELEVATOR PITCH ==================== -->
+<section id="elevator">
+<h2>Elevator Pitch</h2>
+<div class="card open">
+  <div class="card-body">
+    <p><strong>LegacyLens</strong> is a RAG (Retrieval-Augmented Generation) system that makes NASA's NASTRAN-95 Fortran 77 codebase queryable through natural language. Instead of manually searching through 418,000+ lines of legacy code across 1,846 files, developers can ask questions like "Where is the main entry point?" or "How does stiffness matrix assembly work?" and get AI-generated answers with specific file and line references.</p>
+
+    <div class="highlight">
+      <strong>One-liner:</strong> "I built an AI-powered code intelligence tool that uses RAG to let developers query a 418K-line NASA Fortran codebase in natural language, with syntax-highlighted source references and five code understanding features."
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<section id="architecture">
+<h2>System Architecture</h2>
+<div class="card open">
+  <div class="card-body">
+    <pre class="diagram">
+User Query
+    │
+    ▼
+┌──────────────────────────────────────────────────┐
+│              React Frontend (Vite)                │
+│  Query Tab │ Code Analysis Tab │ Stats Tab        │
+└──────────────┬───────────────────────────────────┘
+               │ HTTP/JSON
+               ▼
+┌──────────────────────────────────────────────────┐
+│            FastAPI Backend (Python)               │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐ │
+│  │         INGESTION PIPELINE                   │ │
+│  │  File Discovery → Preprocessor → Chunker    │ │
+│  │  → Embedder → Pinecone Store                │ │
+│  └─────────────────────────────────────────────┘ │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐ │
+│  │         RETRIEVAL PIPELINE                   │ │
+│  │  Embed Query → Pinecone Search → Rerank     │ │
+│  │  → Claude LLM Answer Generation             │ │
+│  └─────────────────────────────────────────────┘ │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐ │
+│  │         5 FEATURE MODULES                    │ │
+│  │  Explainer │ Dependencies │ Patterns         │ │
+│  │  Doc Generator │ Business Logic              │ │
+│  └─────────────────────────────────────────────┘ │
+└──────┬──────────────┬──────────────┬─────────────┘
+       │              │              │
+       ▼              ▼              ▼
+  Pinecone       OpenAI API     Anthropic API
+  (Vectors)      (Embeddings)   (Claude LLM)
+    </pre>
+
+    <h3>Tech Stack</h3>
+    <table>
+      <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+      <tr><td>Backend</td><td>Python 3.11 / FastAPI</td><td>Async, auto-docs, type hints</td></tr>
+      <tr><td>Frontend</td><td>React 19 / Vite</td><td>Fast builds, modern React</td></tr>
+      <tr><td>Vector DB</td><td>Pinecone (serverless)</td><td>Free tier, managed, metadata filtering</td></tr>
+      <tr><td>Embeddings</td><td>OpenAI text-embedding-3-small</td><td>$0.02/1M tokens, 1536 dims</td></tr>
+      <tr><td>LLM</td><td>Claude Sonnet</td><td>Excellent code understanding</td></tr>
+      <tr><td>Deployment</td><td>Docker / Railway</td><td>Single container, auto-deploy</td></tr>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- ==================== INGESTION ==================== -->
+<section id="ingestion">
+<h2>Ingestion Pipeline</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>How code gets from files to vectors</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <pre>File Discovery → Preprocessor → Chunker → Embedder → Pinecone</pre>
+
+    <h3>Step 1: File Discovery</h3>
+    <p>Recursively scans <code>codebases/nastran95/</code> for supported file extensions (<code>.f</code>, <code>.f77</code>, <code>.f90</code>, <code>.c</code>, <code>.h</code>). Skips <code>bin/</code>, <code>inp/</code>, <code>um/</code> directories. Detects language from extension.</p>
+    <p><strong>Result:</strong> 1,846 files, 418,349 lines of code</p>
+
+    <h3>Step 2: Preprocessing</h3>
+    <ul>
+      <li>Encoding detection with <code>chardet</code> (legacy files may not be UTF-8)</li>
+      <li>Fortran 77: truncate columns 73-80 (sequence numbers, not code)</li>
+      <li>Normalize line endings, strip trailing whitespace, collapse blank lines</li>
+    </ul>
+
+    <h3>Step 3: Chunking (the core module)</h3>
+    <p>Syntax-aware parsing — see <a href="#chunking">Chunking section</a></p>
+
+    <h3>Step 4: Embedding</h3>
+    <p>Batches of 100 chunks → OpenAI API. Prepends metadata header before embedding. See <a href="#embedding">Embedding section</a></p>
+
+    <h3>Step 5: Vector Storage</h3>
+    <p>Upserts to Pinecone in batches of 100 with metadata (file_path, lines, type, name, language, content, dependencies)</p>
+
+    <h3>Actual Metrics</h3>
+    <table>
+      <tr><td>Files processed</td><td><strong>1,846</strong></td></tr>
+      <tr><td>Lines of code</td><td><strong>418,349</strong></td></tr>
+      <tr><td>Chunks created</td><td><strong>4,040</strong></td></tr>
+      <tr><td>Embedding tokens</td><td><strong>4,680,546</strong></td></tr>
+      <tr><td>Ingestion time</td><td><strong>~4 minutes</strong></td></tr>
+      <tr><td>Ingestion cost</td><td><strong>~$0.094</strong></td></tr>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- ==================== RETRIEVAL ==================== -->
+<section id="retrieval">
+<h2>Retrieval Pipeline</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>From query to answer</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <pre>User Query → Embed → Pinecone Search (top-5) → Rerank → Claude Generation → Answer</pre>
+
+    <h3>Semantic Search</h3>
+    <p>The query is embedded with the same OpenAI model used for ingestion. Pinecone returns top-k results (default 5) by cosine similarity. Supports optional filters by language and file path.</p>
+
+    <h3>Reranking</h3>
+    <p>Lightweight keyword-based boosting (no cross-encoder needed):</p>
+    <table>
+      <tr><th>Boost</th><th>Amount</th><th>Condition</th></tr>
+      <tr><td>Name match</td><td>+0.10</td><td>Query keyword in chunk name</td></tr>
+      <tr><td>Content match</td><td>+0.02 each</td><td>Query keyword in content (max 5)</td></tr>
+      <tr><td>Score cap</td><td>1.00</td><td>Maximum final score</td></tr>
+    </table>
+
+    <h3>Answer Generation</h3>
+    <p>Claude Sonnet with a NASTRAN-specific system prompt that explains:</p>
+    <ul>
+      <li>COMMON blocks (shared data between subroutines)</li>
+      <li>DMAP (Direct Matrix Abstraction Program) executive control</li>
+      <li>GINO (General Input/Output) system</li>
+      <li>Open Core memory management</li>
+      <li>Fortran 77 fixed-form conventions</li>
+    </ul>
+    <p>Max 2,000 output tokens. Required to cite file:line references.</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== CHUNKING ==================== -->
+<section id="chunking">
+<h2>Fortran 77 Chunking (Core Innovation)</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Why this is the hardest part of the project</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Fortran 77 Fixed-Form Format</h3>
+    <pre>
+Columns:  1     6   7                    72  73      80
+          |     |   |                     |  |        |
+          Label Cont Source Code              Seq Nums
+
+C     THIS IS A COMMENT (C in column 1)
+      SUBROUTINE TEST(A,B,C)         (code in cols 7-72)
+      INTEGER A,B,C
+     +  CONTINUED_LINE               (+ in col 6 = continuation)
+      A = B + C
+      RETURN
+      END                            12345678 (cols 73-80 stripped)
+    </pre>
+
+    <h3>Boundary Detection Rules</h3>
+    <ol>
+      <li>Scan columns 7+ for keywords: <code>SUBROUTINE</code>, <code>FUNCTION</code>, <code>PROGRAM</code>, <code>BLOCK DATA</code>, <code>ENTRY</code></li>
+      <li>Track bare <code>END</code> statements as routine terminators</li>
+      <li>Group continuation lines (non-blank/non-zero in column 6) with parent</li>
+      <li>Skip comments (<code>C</code>/<code>*</code>/<code>!</code> in column 1) for boundary detection</li>
+      <li>Extract dependencies: <code>CALL</code> targets, <code>COMMON</code> blocks, <code>INCLUDE</code> files</li>
+    </ol>
+
+    <h3>Chunk Data Model</h3>
+    <pre>
+@dataclass
+class Chunk:
+    content: str         # Full source code
+    file_path: str       # Relative path (e.g., "bd/sdr2a.f")
+    start_line: int      # First line (1-based)
+    end_line: int        # Last line
+    chunk_type: str      # subroutine|function|program|block-data|entry|fixed-size
+    name: str            # Routine name (e.g., "SDR2A")
+    language: str        # fortran|c
+    dependencies: list   # ["CALL:TARGET", "COMMON:BLOCK", "INCLUDE:FILE"]
+    </pre>
+
+    <h3>Why Not AST-Based?</h3>
+    <p>No production-quality Fortran 77 parser exists for Python. The fixed-form format makes regex-based parsing reliable — column positions are <strong>deterministic</strong>, not context-dependent. Our approach correctly identifies 100% of SUBROUTINE/FUNCTION boundaries.</p>
+
+    <h3>Fallback</h3>
+    <p>Files without detectable routine boundaries use <strong>fixed-size chunking</strong>: 40 lines with 10-line overlap.</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== EMBEDDING ==================== -->
+<section id="embedding">
+<h2>Embedding Strategy</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>How code becomes vectors</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Model: OpenAI text-embedding-3-small</h3>
+    <table>
+      <tr><td>Dimensions</td><td>1,536</td></tr>
+      <tr><td>Cost</td><td>$0.02 per 1M tokens</td></tr>
+      <tr><td>Max context</td><td>8,191 tokens</td></tr>
+    </table>
+
+    <h3>Metadata Header Prepended</h3>
+    <p>Before embedding, we prepend a structured header to give the model context:</p>
+    <pre>[FORTRAN SUBROUTINE 'SDR2A' in bd/sdr2a.f:1-45]</pre>
+    <p>This helps the embedding model understand the code's role and location.</p>
+
+    <h3>Rate Limit Handling</h3>
+    <ul>
+      <li>Batch size: 100 chunks per API call</li>
+      <li>0.5 second delay between batches</li>
+      <li>Exponential backoff on rate limit errors (2^attempt + 1 seconds, up to 5 retries)</li>
+      <li>Token truncation: chunks over 8,000 tokens get lines removed iteratively (20% at a time)</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<!-- ==================== VECTOR DB ==================== -->
+<section id="vectordb">
+<h2>Vector Database (Pinecone)</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Why Pinecone and how it's configured</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Configuration</h3>
+    <table>
+      <tr><td>Index name</td><td><code>nastran95</code></td></tr>
+      <tr><td>Dimensions</td><td>1,536</td></tr>
+      <tr><td>Metric</td><td>Cosine similarity</td></tr>
+      <tr><td>Cloud</td><td>AWS us-east-1 (serverless)</td></tr>
+      <tr><td>Vectors stored</td><td>4,040</td></tr>
+    </table>
+
+    <h3>Why Pinecone?</h3>
+    <table>
+      <tr><th>Criteria</th><th>Pinecone</th><th>ChromaDB</th><th>pgvector</th></tr>
+      <tr><td>Managed hosting</td><td>Yes (serverless)</td><td>No</td><td>No</td></tr>
+      <tr><td>Free tier</td><td>100K vectors</td><td>N/A (local)</td><td>N/A</td></tr>
+      <tr><td>Metadata filtering</td><td>Native</td><td>Basic</td><td>SQL WHERE</td></tr>
+      <tr><td>Setup complexity</td><td>Minimal</td><td>Low</td><td>Medium</td></tr>
+    </table>
+
+    <h3>Metadata per Vector</h3>
+    <p>Each vector stores: <code>file_path</code>, <code>start_line</code>, <code>end_line</code>, <code>chunk_type</code>, <code>name</code>, <code>language</code>, <code>content</code> (truncated to 8KB), <code>dependencies</code> (JSON array)</p>
+    <p>40KB metadata limit per vector — content and dependencies are truncated to stay under.</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== FEATURES ==================== -->
+<section id="features">
+<h2>Code Understanding Features (5)</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Beyond basic search</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>Feature</th><th>How It Works</th><th>Uses LLM?</th></tr>
+      <tr>
+        <td><strong>Code Explainer</strong></td>
+        <td>Searches for entity chunks, sends to Claude: "Explain what this does in plain English"</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><strong>Dependency Mapper</strong></td>
+        <td>Extracts CALL/COMMON/INCLUDE from chunk metadata. Finds callers via reverse search (who calls this entity?)</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td><strong>Pattern Detector</strong></td>
+        <td>Uses entity's code as embedding query to find structurally similar code elsewhere. Filters out self-matches</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td><strong>Doc Generator</strong></td>
+        <td>Claude generates structured docs: Overview, Parameters, Logic Flow, Dependencies, Business Rules</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><strong>Business Logic Extractor</strong></td>
+        <td>Claude extracts IF conditions, validations, calculations as structured rules with Rule IDs</td>
+        <td>Yes</td>
+      </tr>
+    </table>
+
+    <p><strong>Key insight:</strong> Not all features need an LLM. Dependency mapping and pattern detection work purely from vector search and metadata, making them essentially free ($0.000001 per use).</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== FRONTEND ==================== -->
+<section id="frontend">
+<h2>Frontend</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>React SPA with three tabs</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Tech</h3>
+    <p>React 19, Vite 6, <code>react-syntax-highlighter</code> with Fortran language support and atomOneDark theme. Single-file SPA (~450 lines).</p>
+
+    <h3>Query Tab</h3>
+    <ul>
+      <li>Natural language search with 5 sample query buttons</li>
+      <li>AI-generated answer display with basic markdown rendering</li>
+      <li>Source cards: file path, line numbers, relevance score percentage</li>
+      <li>Expandable syntax-highlighted code with correct starting line numbers</li>
+      <li>"View File" button → full file modal with chunk lines highlighted in blue</li>
+    </ul>
+
+    <h3>Code Analysis Tab</h3>
+    <ul>
+      <li>Entity name input</li>
+      <li>5 feature buttons with formatted results (not raw JSON)</li>
+      <li>Each feature renders differently: explanations as paragraphs, dependencies as tag lists, patterns as cards with similarity %</li>
+    </ul>
+
+    <h3>Stats Tab</h3>
+    <ul>
+      <li>Index stats (total vectors, dimension)</li>
+      <li>Cost breakdown table (embedding, LLM input, LLM output)</li>
+      <li>Query and ingestion counts</li>
+    </ul>
+
+    <h3>Key UI Decision</h3>
+    <p>Dark theme (#0a0a0f background, #00d4ff accent) — appropriate for a developer tool. Frontend served as static files from FastAPI in production (single deployment unit).</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== COSTS ==================== -->
+<section id="costs">
+<h2>Cost Analysis</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>How much it costs and projections</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Development Costs (Actual)</h3>
+    <table>
+      <tr><th>Category</th><th>Cost</th></tr>
+      <tr><td>Ingestion (4.7M tokens embedding)</td><td>$0.094</td></tr>
+      <tr><td>Dev queries (~50 with Claude)</td><td>~$0.83</td></tr>
+      <tr><td>Pinecone hosting</td><td>$0.00 (free tier)</td></tr>
+      <tr><td><strong>Total development cost</strong></td><td><strong>~$0.92</strong></td></tr>
+    </table>
+
+    <h3>Per-Query Cost</h3>
+    <table>
+      <tr><th>Component</th><th>Tokens</th><th>Cost</th></tr>
+      <tr><td>Query embedding</td><td>~50</td><td>$0.000001</td></tr>
+      <tr><td>Claude input</td><td>~3,000</td><td>$0.009</td></tr>
+      <tr><td>Claude output</td><td>~500</td><td>$0.0075</td></tr>
+      <tr><td><strong>Total per query</strong></td><td></td><td><strong>$0.0165</strong></td></tr>
+    </table>
+
+    <h3>Production Projections (Monthly)</h3>
+    <table>
+      <tr><th>Users</th><th>Queries/Month</th><th>Monthly Cost</th></tr>
+      <tr><td>10</td><td>1,500</td><td>$24.75</td></tr>
+      <tr><td>100</td><td>15,000</td><td>$247.52</td></tr>
+      <tr><td>1,000</td><td>150,000</td><td>$2,545</td></tr>
+      <tr><td>10,000</td><td>1,500,000</td><td>$24,822</td></tr>
+    </table>
+
+    <h3>Optimization Strategies</h3>
+    <ul>
+      <li><strong>Caching:</strong> LRU cache for frequent queries → 30-50% savings</li>
+      <li><strong>Route to Haiku:</strong> Simple queries use cheaper model → 85% savings on 60% of queries</li>
+      <li><strong>Reduce top-k:</strong> 3 instead of 5 for simple queries → 40% less LLM input</li>
+      <li><strong>Self-hosted embeddings:</strong> sentence-transformers → 100% embedding cost elimination</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<!-- ==================== KEY DECISIONS ==================== -->
+<section id="decisions">
+<h2>Key Technical Decisions</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Why I chose what I chose</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <div class="qa">
+      <div class="q">Why syntax-aware chunking instead of fixed-size?</div>
+      <div class="a">Fixed-size chunks break mid-function, losing context. Syntax-aware chunks preserve complete subroutines as units, so the embedding captures the full semantic meaning. This dramatically improves retrieval precision — the system returns the exact routine you're asking about, not a fragment.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Why keyword reranking instead of a cross-encoder?</div>
+      <div class="a">Cross-encoders (like ms-marco-MiniLM) add 200-500ms latency and infrastructure complexity. For code search, <strong>exact name matching is the highest-value signal</strong> — users often know the routine name. A simple +0.1 boost for name matches solves the most common failure mode (exact match ranked below semantic match) at zero additional cost.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Why OpenAI for embeddings + Claude for generation?</div>
+      <div class="a">Vendor diversity: if one provider has an outage, only half the system is affected. Also leverages each provider's strengths — OpenAI has battle-tested embeddings, Claude has excellent code understanding and instruction following.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Why Pinecone over ChromaDB or pgvector?</div>
+      <div class="a">Zero infrastructure management. Pinecone serverless auto-scales, has a generous free tier (100K vectors), and supports native metadata filtering. ChromaDB would require self-hosting, pgvector needs a Postgres instance. For a demo project with 4K vectors, the free tier is perfect.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Why a single-file React SPA instead of multiple components?</div>
+      <div class="a">Pragmatic choice — the app has three tabs with straightforward state. Splitting into 10+ component files adds boilerplate without improving clarity for a ~450-line app. If the frontend grew, I'd refactor into components.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ==================== CHALLENGES ==================== -->
+<section id="challenges">
+<h2>Challenges & Solutions</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Problems I hit and how I solved them</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <div class="qa">
+      <div class="q">OpenAI Rate Limits During Ingestion</div>
+      <div class="a"><strong>Problem:</strong> Embedding 4,040 chunks in rapid succession hit the 1M token/minute rate limit.<br>
+      <strong>Solution:</strong> Exponential backoff (2^attempt + 1 seconds, up to 5 retries) plus 0.5s delay between batches. The ingestion completes in ~4 minutes without manual intervention.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Token Limit Exceeded on Large Routines</div>
+      <div class="a"><strong>Problem:</strong> Some NASTRAN routines exceed 1,000 lines, producing chunks with 15,000+ tokens — far over the 8,191 token embedding limit.<br>
+      <strong>Solution:</strong> Iterative truncation: if a chunk exceeds 8,000 tokens, remove 20% of lines from the end and re-count. Repeat until under limit. This preserves the function signature and early logic.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Windows Backslash Paths</div>
+      <div class="a"><strong>Problem:</strong> Ingestion on Windows stored file paths with backslashes (e.g., <code>mis\sub.f</code>). On Linux (Railway), the file lookup failed because files are at <code>mis/sub.f</code>.<br>
+      <strong>Solution:</strong> Normalize backslashes to forward slashes in the <code>/api/file</code> endpoint, and use <code>.as_posix()</code> in file discovery for future ingestions.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Railway Docker PORT Variable</div>
+      <div class="a"><strong>Problem:</strong> Railway injects <code>$PORT</code> as an environment variable, but the Dockerfile CMD wasn't expanding it properly.<br>
+      <strong>Solution:</strong> Used Python to read <code>os.environ.get('PORT', '8000')</code> and pass it directly to uvicorn, bypassing shell expansion issues.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Encoding Detection for Legacy Files</div>
+      <div class="a"><strong>Problem:</strong> Some 1970s-era Fortran files use non-UTF-8 encodings.<br>
+      <strong>Solution:</strong> <code>chardet</code> library detects encoding automatically, with UTF-8 fallback using <code>errors='replace'</code>.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ==================== TESTING ==================== -->
+<section id="testing">
+<h2>Testing & CI/CD</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>64 tests, all green</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Test Suite</h3>
+    <table>
+      <tr><th>File</th><th>Tests</th><th>What It Covers</th></tr>
+      <tr><td>test_chunker.py</td><td>38</td><td>F77 helpers, dependency extraction, subroutine/function/block-data parsing, fixed-size fallback, token estimation</td></tr>
+      <tr><td>test_preprocessor.py</td><td>10</td><td>Column truncation, whitespace normalization, line ending handling</td></tr>
+      <tr><td>test_reranker.py</td><td>7</td><td>Score boosting, name match priority, score capping, case insensitivity</td></tr>
+      <tr><td>test_api.py</td><td>8</td><td>Health endpoint, search (mocked), file 404, path traversal prevention, stats (mocked)</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>64</strong></td><td></td></tr>
+    </table>
+
+    <h3>CI/CD (GitHub Actions)</h3>
+    <p>Two parallel jobs on push to main:</p>
+    <ul>
+      <li><strong>test:</strong> Python 3.11, install deps, run pytest with dummy API keys</li>
+      <li><strong>frontend:</strong> Node 20, npm install, lint, build</li>
+    </ul>
+
+    <h3>Deployment</h3>
+    <p>Railway auto-deploys on push to main. Dockerfile handles frontend build (multi-stage with Node), clones NASTRAN-95, and starts uvicorn.</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== DEPLOYMENT ==================== -->
+<section id="deployment">
+<h2>Deployment Architecture</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Single container on Railway</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Dockerfile Strategy</h3>
+    <p>Single-stage build that installs both Node.js (for frontend build) and Python (for backend):</p>
+    <pre>
+1. Install Node.js 20 + Python 3.11
+2. npm ci && npm run build (frontend)
+3. pip install requirements.txt (backend)
+4. git clone NASTRAN-95 repo (source files for drill-down)
+5. CMD: uvicorn with PORT from environment
+    </pre>
+
+    <h3>Why Single Container?</h3>
+    <p>Frontend is served as static files from FastAPI. No separate web server needed. Simplifies deployment and reduces costs — one Railway service instead of two.</p>
+
+    <h3>Environment Variables</h3>
+    <p><code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>PINECONE_API_KEY</code>, <code>PINECONE_INDEX_NAME</code> — all set in Railway dashboard, never in code.</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== COMMON QUESTIONS ==================== -->
+<section id="questions">
+<h2>Common Interview Questions</h2>
+<div class="card open">
+  <div class="card-body">
+    <div class="qa">
+      <div class="q">Q: What is RAG and why did you use it?</div>
+      <div class="a">RAG (Retrieval-Augmented Generation) combines information retrieval with LLM generation. Instead of asking an LLM to answer from its training data (which may be outdated or hallucinate), we first <strong>retrieve</strong> relevant documents from a vector database, then <strong>augment</strong> the LLM's prompt with those documents, and the LLM <strong>generates</strong> an answer grounded in actual source code. This ensures answers cite real files and line numbers.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: How do you handle hallucinations?</div>
+      <div class="a">Three strategies: (1) The system prompt requires Claude to cite specific file:line references for every claim. (2) We include the actual source code in the context, so the LLM can only reference code that exists. (3) The user sees the source chunks alongside the answer, so they can verify claims against the actual code.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: What happens when the query doesn't match any code?</div>
+      <div class="a">Pinecone always returns results (cosine similarity finds the closest matches), but the scores will be low. The reranker won't boost irrelevant results. Claude receives low-relevance chunks and its system prompt instructs it to note when it's uncertain or when the retrieved code may not be directly relevant.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: How would you scale this to a larger codebase?</div>
+      <div class="a">The architecture scales naturally: Pinecone serverless handles millions of vectors, embeddings are batched, and the chunker is per-file. For a 10x larger codebase, ingestion takes ~40 minutes instead of 4, and costs ~$1 instead of $0.10. The retrieval pipeline is unchanged — Pinecone search is O(log n).</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: Why Fortran 77 specifically?</div>
+      <div class="a">NASTRAN-95 is a real NASA codebase used in structural analysis. Fortran 77's fixed-form format (column-based, continuation markers, comment conventions) makes it a challenging but tractable chunking problem. The fixed-form format is actually <em>more</em> predictable than free-form languages, making regex-based parsing reliable.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: What would you improve if you had more time?</div>
+      <div class="a">
+        <ul>
+          <li><strong>Query caching:</strong> LRU cache for frequent queries (30-50% cost savings)</li>
+          <li><strong>Streaming responses:</strong> Stream Claude's answer token-by-token for better UX</li>
+          <li><strong>Cross-file dependency graph:</strong> Visual graph showing how routines connect</li>
+          <li><strong>Conversation memory:</strong> Follow-up questions that build on previous context</li>
+          <li><strong>Evaluation framework:</strong> Automated precision@5 testing with labeled queries</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: Walk me through what happens when a user submits a query.</div>
+      <div class="a">
+        <ol>
+          <li>Frontend sends POST to <code>/api/query</code> with the query text</li>
+          <li>Backend embeds the query using OpenAI text-embedding-3-small (same model as ingestion)</li>
+          <li>Embedded query goes to Pinecone for cosine similarity search, returns top-5 chunks</li>
+          <li>Reranker boosts scores: +0.1 for name matches, +0.02 for content keyword matches</li>
+          <li>Top chunks (with source code) are sent to Claude Sonnet with a NASTRAN-specific system prompt</li>
+          <li>Claude generates an answer with file:line citations</li>
+          <li>Backend returns: answer text, source chunks, query time, token usage</li>
+          <li>Frontend renders: answer with markdown formatting, source cards with syntax highlighting, View File buttons</li>
+        </ol>
+        <strong>Total latency:</strong> ~2-3 seconds (embedding: 200ms, Pinecone: 300ms, Claude: 1-2s)
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ==================== DEEP DIVE Q&A ==================== -->
+<section id="deep">
+<h2>Deep Dive Technical Q&A</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>For senior/staff-level interviews</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <div class="qa">
+      <div class="q">Q: Why cosine similarity over dot product or Euclidean distance?</div>
+      <div class="a">Cosine similarity measures the angle between vectors, not magnitude. This matters because OpenAI embeddings are normalized — two chunks about similar topics will point in similar directions regardless of text length. Dot product would favor longer texts (higher magnitude). Euclidean distance works but is less intuitive for similarity ranking.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: How do you handle the 8,191 token limit for embeddings?</div>
+      <div class="a">We set a safety margin at 8,000 tokens. If a chunk (with metadata header) exceeds this, we iteratively remove 20% of lines from the end and re-count tokens using tiktoken (cl100k_base encoding). This preserves the function signature and early logic, which are most semantically important. In practice, only ~2% of NASTRAN routines exceed the limit.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: What's the difference between your ingestion embedding and query embedding?</div>
+      <div class="a">They use the <strong>same model</strong> (text-embedding-3-small) — this is critical for cosine similarity to work. The ingestion embedding includes a metadata header (<code>[FORTRAN SUBROUTINE 'SDR2A' in bd/sdr2a.f:1-45]</code>) to provide context. The query embedding is just the raw query text. Despite this asymmetry, the model handles it well because the header words are semantically related to common query patterns.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: How do you prevent prompt injection through code content?</div>
+      <div class="a">The code content sent to Claude is from the Pinecone-stored chunks, which were ingested from the actual NASTRAN-95 source files. Since NASTRAN-95 is a 1970s Fortran codebase, prompt injection risk is essentially zero. For a general-purpose system, I'd sanitize code content before including it in the LLM prompt, and use Claude's system prompt to instruct it to treat code blocks as data, not instructions.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: How does the dependency mapper find reverse dependencies (who calls X)?</div>
+      <div class="a">Each chunk stores a <code>dependencies</code> list in Pinecone metadata (e.g., <code>["CALL:SDR2A", "COMMON:XNSTRN"]</code>). To find who calls entity X, we search for chunks whose name matches X to find its code, then we do a second search for chunks containing <code>CALL:X</code> in their dependencies. Pinecone's metadata filtering makes this efficient.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: What are the failure modes of your reranker?</div>
+      <div class="a">
+        <ul>
+          <li><strong>Synonym blindness:</strong> "matrix assembly" won't boost a chunk named "MATASS" because there's no keyword overlap. The semantic search score handles this, but the reranker can't help.</li>
+          <li><strong>Common word pollution:</strong> A query about "DATA" will boost every BLOCK DATA chunk equally, providing no discriminative signal.</li>
+          <li><strong>Name collision:</strong> If two routines share a name (rare in practice), both get boosted equally.</li>
+        </ul>
+        A cross-encoder would handle all these cases better, but at significant latency and cost. For this project's scale, the keyword approach is a good trade-off.
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: How would you evaluate retrieval quality systematically?</div>
+      <div class="a">Create a labeled evaluation set: 50 queries with manually labeled relevant chunks. Measure precision@5 (what % of top-5 results are relevant), recall@10, and MRR (mean reciprocal rank). Run this after any chunking or reranking changes. I'd also track user click-through on source cards as an implicit relevance signal.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Q: Why not fine-tune the embedding model on Fortran code?</div>
+      <div class="a">Fine-tuning text-embedding-3-small requires OpenAI's fine-tuning API, which is more complex and expensive. For 4,040 chunks, the general-purpose model works well because: (1) Fortran keywords (SUBROUTINE, CALL, COMMON) are English words the model already understands, (2) the metadata header provides domain context, and (3) the reranker compensates for embedding imprecision. Fine-tuning would make sense at 100K+ chunks where marginal precision improvements have a larger impact.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer style="text-align: center; margin-top: 40px; padding: 20px; color: #666; font-size: 0.85rem;">
+  LegacyLens for NASTRAN-95 &mdash; Built with FastAPI, React, Pinecone, OpenAI, Claude
+</footer>
+
+</body>
+</html>
