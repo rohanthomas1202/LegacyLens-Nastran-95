@@ -1021,6 +1021,162 @@
   box-shadow: 0 0 12px rgba(255, 0, 229, 0.1) !important;
 }
 
+/* ═══════════ Modernize ═══════════ */
+.modernize-row {
+  align-items: center;
+}
+
+.language-select {
+  padding: 10px 16px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-btn);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.3s var(--ease-out-expo);
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.language-select:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.language-select option {
+  background: #0a0a0f;
+  color: var(--text-primary);
+}
+
+.modernize-btn {
+  background: rgba(173, 255, 0, 0.06) !important;
+  border-color: rgba(173, 255, 0, 0.2) !important;
+  color: var(--lime) !important;
+}
+
+.modernize-btn:hover {
+  border-color: var(--lime) !important;
+  color: var(--lime) !important;
+  box-shadow: 0 0 12px rgba(173, 255, 0, 0.1) !important;
+}
+
+.modernize-modal {
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-card);
+  width: 96vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.modernize-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+}
+
+.modernize-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modernize-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.modernize-pane {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modernize-pane:first-child {
+  border-right: 1px solid var(--border-glass);
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.pane-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pane-tag {
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pane-tag.original {
+  color: var(--magenta);
+  background: rgba(255, 0, 229, 0.1);
+  border: 1px solid rgba(255, 0, 229, 0.2);
+}
+
+.pane-tag.translated {
+  color: var(--lime);
+  background: rgba(173, 255, 0, 0.1);
+  border: 1px solid rgba(173, 255, 0, 0.2);
+}
+
+.modernize-notes {
+  padding: 24px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.modernize-notes h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .modernize-panes {
+    grid-template-columns: 1fr;
+  }
+  .modernize-pane:first-child {
+    border-right: none;
+    border-bottom: 1px solid var(--border-glass);
+  }
+}
+
 /* ═══════════ Streaming ═══════════ */
 .streaming-indicator {
   animation: pulse 1.5s ease-in-out infinite;
@@ -1229,6 +1385,14 @@
 .graph-container-full {
   height: calc(100vh - 200px);
   min-height: 400px;
+}
+
+.graph-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 300px);
+  min-height: 300px;
 }
 
 .graph-container svg {

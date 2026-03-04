@@ -1,4 +1,4 @@
-# LegacyLens Demo Video Script
+# CODEX-95 Demo Video Script
 
 **Target length**: 3-5 minutes
 
@@ -6,15 +6,15 @@
 
 ## Opening (15 seconds)
 
-> "Hi, I'm Rohan. I built LegacyLens — a RAG-powered system that makes NASA's NASTRAN-95 codebase queryable through natural language. NASTRAN-95 is a structural analysis program written in Fortran 77 with over 418,000 lines of code across 1,800+ files. Let me show you how it works."
+> "Hi, I'm Rohan. I built CODEX-95 — an AI-powered code intelligence tool for NASA's NASTRAN-95 codebase. NASTRAN-95 is a structural analysis program written in Fortran 77 with over 418,000 lines of code across 1,800+ files. Let me show you what it can do."
 
 ---
 
 ## 1. Show the App (10 seconds)
 
 - Open the deployed app in browser
-- Show the clean dark UI with the three tabs: Query, Code Analysis, Stats
-- Point out the search bar and sample query buttons
+- Show the cyberpunk-themed UI with four tabs: Query, Analysis, Graph, Dashboard
+- Point out the cursor glow effect, glass navigation, and the live status indicator
 
 ---
 
@@ -22,9 +22,9 @@
 
 **Click the sample query**: "Where is the main entry point of this program?"
 
-> "I can ask natural language questions. Here I'm asking where the main entry point is. The system embeds my query, searches Pinecone for the most relevant code chunks, reranks them, and sends the top results to Claude for answer generation."
+> "I can ask natural language questions and get streaming AI-generated answers. The system embeds my query, searches Pinecone for the most relevant code chunks, reranks them, and streams the answer from Claude in real-time."
 
-- **Show the AI answer** — it should reference NASTRN as the main program
+- **Show the streaming answer** — tokens appear as they're generated
 - **Show the source cards** — point out the file path, line numbers, relevance score
 - **Expand a source** — show the syntax-highlighted Fortran code with line numbers
 
@@ -32,7 +32,7 @@
 
 **Click "View File"** on one of the sources:
 
-> "I can drill down to see the full file. The relevant section is highlighted in blue so I can see the context around it."
+> "I can drill down to see the full file. The relevant section is highlighted so I can see the context around it."
 
 - Close the modal
 
@@ -40,29 +40,21 @@
 
 ## 3. Second Query (30 seconds)
 
-**Type**: "What subroutines handle error checking?"
-
-> "Let me search for error handling. The system finds ERRMKN, MACHCK, and other error-related subroutines. Notice how it pulls from different files across the codebase — this is the power of semantic search over simple text search."
-
-- Show the results briefly
-
----
-
-## 4. Third Query (30 seconds)
-
 **Type**: "How does stiffness matrix assembly work?"
 
-> "I can ask domain-specific questions too. Here I'm asking about stiffness matrix assembly — a core concept in structural analysis. The system finds relevant subroutines like DPSE4 and explains how they work together."
+> "I can ask domain-specific questions too. Here I'm asking about stiffness matrix assembly — a core concept in structural analysis. The system finds relevant subroutines and explains how they work together, citing specific file and line references."
 
 ---
 
-## 5. Code Analysis Tab (90 seconds)
+## 4. Code Analysis Tab (90 seconds)
 
-**Switch to the Code Analysis tab**
+**Switch to the Analysis tab**
 
-> "Beyond search, LegacyLens has five code understanding features. Let me show them."
+> "Beyond search, CODEX-95 has a suite of code understanding features. Let me show them."
 
-**Type entity name**: `NASTRN`
+**Type entity name using autocomplete**: `NASTRN`
+
+> "The autocomplete searches across all indexed routines in the graph. Let me start with the main program."
 
 ### Explain Code
 - Click "Explain Code"
@@ -70,39 +62,61 @@
 
 ### Map Dependencies
 - Click "Map Dependencies"
-> "Dependency mapping shows what this routine calls and what calls it. You can see the CALL targets and COMMON blocks it uses."
+> "Dependency mapping shows what this routine calls and what calls it — the CALL targets and COMMON blocks."
 
-### Find Patterns
-- Click "Find Patterns"
-> "Pattern detection finds structurally similar code elsewhere in the codebase, with similarity percentages."
+### Modernize Code
+- Select "Python" from the language dropdown, click "Modernize Code"
+> "This is the code modernization feature. It translates the Fortran 77 code to a modern language — here I picked Python. The side-by-side view shows the original on the left and the translation on the right, with migration notes explaining the idiom mappings, type conversions, and control flow changes."
+
+- Show the modal briefly, point out the pane headers and migration notes
+- Close the modal
 
 ### Generate Docs
 - Click "Generate Docs"
 > "The documentation generator creates structured docs — overview, parameters, logic flow, dependencies — all auto-generated from the source code."
 
-### Extract Rules
-- Click "Extract Rules"
-> "Finally, business rule extraction pulls out the IF conditions, validations, and calculations as structured rules."
+### Dead Code Detection
+- Click "Detect Dead Code"
+> "Dead code detection analyzes the call graph to find routines with zero incoming calls — potentially unreachable code."
 
 ---
 
-## 6. Stats Tab (15 seconds)
+## 5. Graph Tab (45 seconds)
 
-**Switch to Stats tab**
+**Switch to the Graph tab**
 
-> "The Stats tab shows real-time metrics — total vectors indexed, query count, and a full cost breakdown. You can see the total API cost is under a dollar for the entire project."
+> "The interactive dependency graph visualizes the call relationships in the codebase. Each node is a subroutine or function, and edges show call dependencies."
+
+- Show the 2D graph, click on a node to recenter
+- Toggle to 3D mode
+
+> "I can switch to a 3D view that auto-rotates, giving a spatial perspective of the code architecture. Ctrl+scroll to zoom, right-click to pan."
+
+### Code Flow Tracer
+- Enter `NASTRN` as source, `MESAGE` as target
+- Click "Trace Path"
+
+> "The code flow tracer finds the shortest call path between any two routines. Here it shows how execution flows from the main program NASTRN to the message handler MESAGE."
+
+---
+
+## 6. Dashboard Tab (15 seconds)
+
+**Switch to Dashboard tab**
+
+> "The Dashboard shows real-time metrics — total vectors indexed, query count, cost breakdown, and a live activity sparkline. The total API cost for the entire project is under a dollar."
 
 ---
 
 ## 7. Architecture Overview (30 seconds)
 
-> "Under the hood, the system uses a two-pipeline architecture. The ingestion pipeline scans the Fortran 77 source files, uses a syntax-aware chunker that understands column-based formatting and routine boundaries, embeds the chunks with OpenAI, and stores them in Pinecone. The retrieval pipeline embeds the query, searches Pinecone, reranks with keyword boosting, and generates answers with Claude Sonnet."
+> "Under the hood, CODEX-95 uses a two-pipeline architecture. The ingestion pipeline scans the Fortran 77 source files with a syntax-aware chunker that understands column-based formatting and routine boundaries, embeds the chunks with OpenAI, and stores them in Pinecone. The retrieval pipeline embeds the query, searches Pinecone, reranks with keyword boosting, and generates streaming answers with Claude Sonnet. On top of this, there's a static call graph built from the chunk dependency metadata that powers the graph visualization, flow tracing, and dead code detection."
 
 ---
 
 ## 8. Closing (15 seconds)
 
-> "LegacyLens makes legacy codebases accessible to developers who may not know Fortran 77. It's deployed on Railway, tested with 64 unit tests, and the full source is on GitHub. Thanks for watching!"
+> "CODEX-95 makes legacy codebases accessible to developers who may not know Fortran 77. It's deployed on Railway, and the full source is on GitHub. Thanks for watching!"
 
 ---
 
@@ -123,14 +137,24 @@ These produce good, demonstrable results:
 
 | Entity | Why |
 |--------|-----|
-| `NASTRN` | Main program — good for all 5 features |
+| `NASTRN` | Main program — good for all features including modernize |
 | `SDR2A` | Well-known subroutine with clear dependencies |
 | `ERRMKN` | Error checking — clear business logic |
 | `DPSE4` | Matrix operations — good for patterns |
+
+## Suggested Flow Tracer Paths
+
+| Source → Target | Why |
+|----------------|-----|
+| `NASTRN` → `MESAGE` | Main program to message handler |
+| `NASTRN` → `BTSTRP` | Main program to bootstrap |
+| `NASTRN` → `DBMINT` | Main program to database init |
 
 ## Tips
 
 - Use the deployed Railway URL, not localhost
 - Have the queries ready to paste so you don't waste time typing
 - Pause briefly on each result so viewers can see the output
-- If a query takes a few seconds, narrate what's happening ("The system is searching across 4,000 code chunks...")
+- If a query takes a few seconds, narrate what's happening ("The system is searching across 4,000 code chunks and streaming the answer in real-time...")
+- For the modernize feature, Python produces the most readable output
+- Show the 3D graph briefly — it's visually impressive but don't spend too long

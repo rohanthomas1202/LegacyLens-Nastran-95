@@ -465,6 +465,12 @@ export default function DependencyGraph() {
         </button>
       </div>
 
+      {loading && !graphData && (
+        <div className="graph-loading">
+          <div className="loading">Loading graph data...</div>
+        </div>
+      )}
+
       {error && <div className="error-msg">{error}</div>}
 
       {graphData && (

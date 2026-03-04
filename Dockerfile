@@ -22,6 +22,8 @@ RUN mkdir -p logs
 
 RUN git clone https://github.com/nasa/NASTRAN-95.git codebases/nastran95
 
+RUN python -c "from backend.features.graph_builder import build_call_graph; build_call_graph()"
+
 EXPOSE 8000
 
 CMD ["python", "-c", "import os; port = os.environ.get('PORT', '8000'); os.execvp('uvicorn', ['uvicorn', 'backend.app:app', '--host', '0.0.0.0', '--port', port])"]

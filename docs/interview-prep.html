@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LegacyLens Interview Prep</title>
+  <title>CODEX-95 Interview Prep</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -124,7 +124,7 @@
 </head>
 <body>
 
-<h1>LegacyLens for NASTRAN-95</h1>
+<h1>CODEX-95</h1>
 <p class="subtitle">Interview Preparation Guide &mdash; Everything you need to know about this project</p>
 
 <nav class="nav">
@@ -136,6 +136,7 @@
   <a href="#embedding">Embedding</a>
   <a href="#vectordb">Vector DB</a>
   <a href="#features">Features</a>
+  <a href="#graph">Graph & Visualization</a>
   <a href="#frontend">Frontend</a>
   <a href="#costs">Costs</a>
   <a href="#decisions">Key Decisions</a>
@@ -151,10 +152,10 @@
 <h2>Elevator Pitch</h2>
 <div class="card open">
   <div class="card-body">
-    <p><strong>LegacyLens</strong> is a RAG (Retrieval-Augmented Generation) system that makes NASA's NASTRAN-95 Fortran 77 codebase queryable through natural language. Instead of manually searching through 418,000+ lines of legacy code across 1,846 files, developers can ask questions like "Where is the main entry point?" or "How does stiffness matrix assembly work?" and get AI-generated answers with specific file and line references.</p>
+    <p><strong>CODEX-95</strong> is a RAG-powered code intelligence platform that makes NASA's NASTRAN-95 Fortran 77 codebase queryable through natural language. Instead of manually searching through 418,000+ lines of legacy code across 1,846 files, developers can ask questions like "Where is the main entry point?" or "How does stiffness matrix assembly work?" and get streaming AI-generated answers with specific file and line references. It also features an interactive dependency graph, code modernization (Fortran&rarr;Python/C/Java/Rust), code flow tracing, dead code detection, and more.</p>
 
     <div class="highlight">
-      <strong>One-liner:</strong> "I built an AI-powered code intelligence tool that uses RAG to let developers query a 418K-line NASA Fortran codebase in natural language, with syntax-highlighted source references and five code understanding features."
+      <strong>One-liner:</strong> "I built an AI-powered code intelligence platform that uses RAG to let developers query, visualize, and modernize a 418K-line NASA Fortran codebase — with streaming AI answers, an interactive 2D/3D dependency graph, and Fortran-to-modern-language translation."
     </div>
   </div>
 </div>
@@ -170,10 +171,11 @@ User Query
     │
     ▼
 ┌──────────────────────────────────────────────────┐
-│              React Frontend (Vite)                │
-│  Query Tab │ Code Analysis Tab │ Stats Tab        │
+│        React 19 Frontend (Vite 6)                 │
+│  Query │ Analysis │ Graph (2D/3D) │ Dashboard    │
+│  Streaming SSE │ Autocomplete │ Cyberpunk UI     │
 └──────────────┬───────────────────────────────────┘
-               │ HTTP/JSON
+               │ HTTP/JSON + SSE
                ▼
 ┌──────────────────────────────────────────────────┐
 │            FastAPI Backend (Python)               │
@@ -187,13 +189,14 @@ User Query
 │  ┌─────────────────────────────────────────────┐ │
 │  │         RETRIEVAL PIPELINE                   │ │
 │  │  Embed Query → Pinecone Search → Rerank     │ │
-│  │  → Claude LLM Answer Generation             │ │
+│  │  → Claude LLM Streaming Generation (SSE)    │ │
 │  └─────────────────────────────────────────────┘ │
 │                                                   │
 │  ┌─────────────────────────────────────────────┐ │
-│  │         5 FEATURE MODULES                    │ │
+│  │         FEATURE MODULES                      │ │
 │  │  Explainer │ Dependencies │ Patterns         │ │
-│  │  Doc Generator │ Business Logic              │ │
+│  │  Doc Gen │ Business Logic │ Modernizer       │ │
+│  │  Graph Builder │ Flow Tracer │ Dead Code     │ │
 │  └─────────────────────────────────────────────┘ │
 └──────┬──────────────┬──────────────┬─────────────┘
        │              │              │
@@ -421,43 +424,97 @@ class Chunk:
 
 <!-- ==================== FEATURES ==================== -->
 <section id="features">
-<h2>Code Understanding Features (5)</h2>
+<h2>Code Understanding Features (9)</h2>
 <div class="card">
   <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
     <h3>Beyond basic search</h3>
     <span class="toggle"></span>
   </div>
   <div class="card-body">
+    <h3>LLM-Powered Features</h3>
     <table>
-      <tr><th>Feature</th><th>How It Works</th><th>Uses LLM?</th></tr>
+      <tr><th>Feature</th><th>How It Works</th></tr>
       <tr>
         <td><strong>Code Explainer</strong></td>
         <td>Searches for entity chunks, sends to Claude: "Explain what this does in plain English"</td>
-        <td>Yes</td>
-      </tr>
-      <tr>
-        <td><strong>Dependency Mapper</strong></td>
-        <td>Extracts CALL/COMMON/INCLUDE from chunk metadata. Finds callers via reverse search (who calls this entity?)</td>
-        <td>No</td>
-      </tr>
-      <tr>
-        <td><strong>Pattern Detector</strong></td>
-        <td>Uses entity's code as embedding query to find structurally similar code elsewhere. Filters out self-matches</td>
-        <td>No</td>
       </tr>
       <tr>
         <td><strong>Doc Generator</strong></td>
         <td>Claude generates structured docs: Overview, Parameters, Logic Flow, Dependencies, Business Rules</td>
-        <td>Yes</td>
       </tr>
       <tr>
         <td><strong>Business Logic Extractor</strong></td>
         <td>Claude extracts IF conditions, validations, calculations as structured rules with Rule IDs</td>
-        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><strong>Code Modernizer</strong></td>
+        <td>Translates Fortran 77 to Python, C, Java, or Rust. Side-by-side view with migration notes covering idiom mappings, type conversions, COMMON block restructuring, and control flow changes. Uses 4000 max tokens (double the default) for complete translations.</td>
       </tr>
     </table>
 
-    <p><strong>Key insight:</strong> Not all features need an LLM. Dependency mapping and pattern detection work purely from vector search and metadata, making them essentially free ($0.000001 per use).</p>
+    <h3>Graph-Powered Features (no LLM, essentially free)</h3>
+    <table>
+      <tr><th>Feature</th><th>How It Works</th></tr>
+      <tr>
+        <td><strong>Dependency Mapper</strong></td>
+        <td>Extracts CALL/COMMON/INCLUDE from chunk metadata. Finds callers via reverse search</td>
+      </tr>
+      <tr>
+        <td><strong>Pattern Detector</strong></td>
+        <td>Uses entity's code as embedding query to find structurally similar code. Filters self-matches</td>
+      </tr>
+      <tr>
+        <td><strong>Call Graph Builder</strong></td>
+        <td>Parses all chunk dependencies to build a full call graph (nodes + edges). Cached to JSON for fast subsequent loads</td>
+      </tr>
+      <tr>
+        <td><strong>Code Flow Tracer</strong></td>
+        <td>BFS shortest path between two routines through the call graph. Shows each hop with file locations</td>
+      </tr>
+      <tr>
+        <td><strong>Dead Code Detector</strong></td>
+        <td>Graph traversal from entry points to find routines with zero incoming edges — potentially unreachable code</td>
+      </tr>
+    </table>
+
+    <p><strong>Key insight:</strong> Features are split between LLM-powered (semantic understanding) and graph-powered (structural analysis). The graph features work purely from chunk metadata and the cached call graph, making them essentially free and instant.</p>
+  </div>
+</div>
+</section>
+
+<!-- ==================== GRAPH ==================== -->
+<section id="graph">
+<h2>Graph & Visualization</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>Interactive dependency graph with 2D/3D modes</h3>
+    <span class="toggle"></span>
+  </div>
+  <div class="card-body">
+    <h3>Call Graph Construction</h3>
+    <p>Built from chunk dependency metadata extracted during ingestion. Each chunk stores <code>CALL:TARGET</code>, <code>COMMON:BLOCK</code>, and <code>INCLUDE:FILE</code> dependencies. The graph builder (<code>graph_builder.py</code>) assembles these into a <code>CallGraph</code> with nodes, edges, reverse edges, and COMMON block mappings. The graph is cached to <code>graph_cache.json</code> for fast subsequent loads.</p>
+
+    <h3>2D Mode (Default)</h3>
+    <ul>
+      <li>D3.js force-directed layout rendered on HTML Canvas</li>
+      <li>Color-coded nodes by chunk type (subroutine, function, program, block-data)</li>
+      <li>Click a node to recenter the subgraph on that entity</li>
+      <li>Ctrl+scroll to zoom, drag to pan</li>
+    </ul>
+
+    <h3>3D Mode (Toggle)</h3>
+    <ul>
+      <li>Three.js via <code>react-force-graph-3d</code>, lazy-loaded (~1.3MB, only downloaded when toggled)</li>
+      <li>Auto-rotation that pauses on user interaction, resumes after 3 seconds</li>
+      <li>Auto-fit on load using <code>zoomToFit()</code></li>
+      <li>Custom OrbitControls: left-click rotate, right-click pan, middle-click disabled, Ctrl+scroll zoom</li>
+    </ul>
+
+    <h3>Code Flow Tracer</h3>
+    <p>BFS shortest path between any two routines. The UI shows the path as a step-by-step sequence with file locations for each hop. Useful for understanding execution flow through the codebase.</p>
+
+    <h3>Dead Code Detection</h3>
+    <p>Traverses from known entry points (PROGRAM blocks) through the call graph. Any routine with zero incoming edges that isn't an entry point is flagged as potentially dead. Reports stats (total routines, reachable count, dead count, coverage percentage) and lists all dead routines with file locations.</p>
   </div>
 </div>
 </section>
@@ -467,38 +524,59 @@ class Chunk:
 <h2>Frontend</h2>
 <div class="card">
   <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
-    <h3>React SPA with three tabs</h3>
+    <h3>Component-based React SPA with four tabs</h3>
     <span class="toggle"></span>
   </div>
   <div class="card-body">
     <h3>Tech</h3>
-    <p>React 19, Vite 6, <code>react-syntax-highlighter</code> with Fortran language support and atomOneDark theme. Single-file SPA (~450 lines).</p>
+    <p>React 19, Vite 6, <code>react-syntax-highlighter</code> (Fortran + Python/C/Java/Rust), D3.js for 2D graphs, Three.js / <code>react-force-graph-3d</code> for 3D graphs (lazy-loaded). Modular component architecture (~12 components).</p>
+
+    <h3>Design System: Industrial Cyberpunk</h3>
+    <ul>
+      <li>Typography: Cabinet Grotesk (display), Satoshi (body), Space Grotesk (mono/code)</li>
+      <li>Color tokens: Cyan <code>#00f2ff</code>, Magenta <code>#ff00e5</code>, Lime <code>#adff00</code></li>
+      <li>Glassmorphism: semi-transparent backgrounds with <code>backdrop-filter: blur(16px)</code></li>
+      <li>Cursor-following ambient glow effect (<code>CursorGlow</code> component)</li>
+      <li>Live health status indicator pulsing in the navbar</li>
+    </ul>
 
     <h3>Query Tab</h3>
     <ul>
-      <li>Natural language search with 5 sample query buttons</li>
-      <li>AI-generated answer display with basic markdown rendering</li>
+      <li>Natural language search with sample query buttons</li>
+      <li><strong>Streaming AI answers via SSE</strong> — tokens appear in real-time</li>
       <li>Source cards: file path, line numbers, relevance score percentage</li>
-      <li>Expandable syntax-highlighted code with correct starting line numbers</li>
-      <li>"View File" button → full file modal with chunk lines highlighted in blue</li>
+      <li>Expandable syntax-highlighted Fortran code with correct starting line numbers</li>
+      <li>"View File" button → full file modal with chunk lines highlighted</li>
     </ul>
 
-    <h3>Code Analysis Tab</h3>
+    <h3>Analysis Tab</h3>
     <ul>
-      <li>Entity name input</li>
-      <li>5 feature buttons with formatted results (not raw JSON)</li>
-      <li>Each feature renders differently: explanations as paragraphs, dependencies as tag lists, patterns as cards with similarity %</li>
+      <li><strong>Smart autocomplete</strong> — searches graph node names by prefix as you type</li>
+      <li>6 feature buttons: Explain, Dependencies, Patterns, Docs, Rules, and <strong>Modernize Code</strong></li>
+      <li>Language selector (Python/C/Java/Rust) for the modernizer</li>
+      <li>Modernize results open in a fullscreen side-by-side modal (original Fortran vs translated code)</li>
+      <li>Dead code detection with stats pills and sortable results table</li>
     </ul>
 
-    <h3>Stats Tab</h3>
+    <h3>Graph Tab</h3>
     <ul>
-      <li>Index stats (total vectors, dimension)</li>
-      <li>Cost breakdown table (embedding, LLM input, LLM output)</li>
-      <li>Query and ingestion counts</li>
+      <li>Interactive 2D dependency graph (D3.js force layout on Canvas)</li>
+      <li>Toggle to 3D mode (Three.js, lazy-loaded)</li>
+      <li>Code flow tracer: find shortest path between any two routines</li>
     </ul>
 
-    <h3>Key UI Decision</h3>
-    <p>Dark theme (#0a0a0f background, #00d4ff accent) — appropriate for a developer tool. Frontend served as static files from FastAPI in production (single deployment unit).</p>
+    <h3>Dashboard Tab</h3>
+    <ul>
+      <li>4-column bento grid with neon accent borders</li>
+      <li>Index stats, cost breakdown, query counts</li>
+      <li>Animated SVG sparkline showing activity over time</li>
+    </ul>
+
+    <h3>Component Architecture</h3>
+    <p>Split into ~12 components: <code>QueryTab</code>, <code>AnalysisTab</code>, <code>StatsTab</code>, <code>DependencyGraph</code>, <code>CodeFlowTracer</code>, <code>SourceCard</code>, <code>FileModal</code>, <code>ModernizeModal</code>, <code>MarkdownContent</code>, <code>Autocomplete</code>, <code>NeonStatusIndicator</code>, <code>AnimatedSparkline</code>, <code>CursorGlow</code>. Graph components are lazy-loaded via <code>React.lazy()</code> for code splitting.</p>
+
+    <h3>Key UI Decisions</h3>
+    <p>Industrial cyberpunk theme (#050505 background, glassmorphism cards, neon accents) — visually distinctive and appropriate for a developer tool. Frontend served as static files from FastAPI in production (single deployment unit). 3D graph is lazy-loaded to avoid shipping 1.3MB of Three.js to users who don't need it.</p>
   </div>
 </div>
 </section>
@@ -580,8 +658,13 @@ class Chunk:
     </div>
 
     <div class="qa">
-      <div class="q">Why a single-file React SPA instead of multiple components?</div>
-      <div class="a">Pragmatic choice — the app has three tabs with straightforward state. Splitting into 10+ component files adds boilerplate without improving clarity for a ~450-line app. If the frontend grew, I'd refactor into components.</div>
+      <div class="q">Why lazy-load the 3D graph instead of including it by default?</div>
+      <div class="a">Three.js and react-force-graph-3d add ~1.3MB to the bundle. Most users only need the 2D view. By using <code>React.lazy()</code> and dynamic <code>import()</code>, the 3D code is only downloaded when the user toggles to 3D mode. This keeps the initial bundle small and the app fast to load.</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">Why component-based architecture instead of a single file?</div>
+      <div class="a">The app grew to include 9 features, 4 tabs, modals, graph visualizations, autocomplete, and streaming. At that scale, a single file becomes unmaintainable. The 12-component architecture keeps each file focused (QueryTab handles queries, DependencyGraph handles the graph, etc.) and enables lazy loading for expensive components like the 3D graph.</div>
     </div>
   </div>
 </div>
@@ -722,12 +805,13 @@ class Chunk:
     <div class="qa">
       <div class="q">Q: What would you improve if you had more time?</div>
       <div class="a">
+        <p>I've already shipped several features that were originally "stretch goals" — streaming responses, the dependency graph, and code modernization. What's still on the roadmap:</p>
         <ul>
+          <li><strong>Conversational mode:</strong> Multi-turn chat with codebase context so follow-up questions build on previous answers</li>
+          <li><strong>Semantic code diff:</strong> Compare two routines side-by-side and highlight structural (not just textual) differences</li>
           <li><strong>Query caching:</strong> LRU cache for frequent queries (30-50% cost savings)</li>
-          <li><strong>Streaming responses:</strong> Stream Claude's answer token-by-token for better UX</li>
-          <li><strong>Cross-file dependency graph:</strong> Visual graph showing how routines connect</li>
-          <li><strong>Conversation memory:</strong> Follow-up questions that build on previous context</li>
           <li><strong>Evaluation framework:</strong> Automated precision@5 testing with labeled queries</li>
+          <li><strong>Self-hosted embeddings:</strong> Replace OpenAI embeddings with sentence-transformers for 100% embedding cost elimination</li>
         </ul>
       </div>
     </div>
@@ -736,16 +820,17 @@ class Chunk:
       <div class="q">Q: Walk me through what happens when a user submits a query.</div>
       <div class="a">
         <ol>
-          <li>Frontend sends POST to <code>/api/query</code> with the query text</li>
+          <li>Frontend sends POST to <code>/api/query/stream</code> with the query text</li>
           <li>Backend embeds the query using OpenAI text-embedding-3-small (same model as ingestion)</li>
           <li>Embedded query goes to Pinecone for cosine similarity search, returns top-5 chunks</li>
           <li>Reranker boosts scores: +0.1 for name matches, +0.02 for content keyword matches</li>
-          <li>Top chunks (with source code) are sent to Claude Sonnet with a NASTRAN-specific system prompt</li>
-          <li>Claude generates an answer with file:line citations</li>
-          <li>Backend returns: answer text, source chunks, query time, token usage</li>
-          <li>Frontend renders: answer with markdown formatting, source cards with syntax highlighting, View File buttons</li>
+          <li>Backend sends an SSE <code>sources</code> event with the ranked source chunks — the frontend immediately renders the source cards</li>
+          <li>Top chunks are sent to Claude Sonnet with a NASTRAN-specific system prompt, using the streaming API</li>
+          <li>Each token is streamed back as an SSE <code>token</code> event — the answer appears in real-time</li>
+          <li>A final <code>done</code> event carries token usage stats</li>
+          <li>Frontend renders: streaming answer with markdown formatting, source cards with syntax highlighting, View File buttons</li>
         </ol>
-        <strong>Total latency:</strong> ~2-3 seconds (embedding: 200ms, Pinecone: 300ms, Claude: 1-2s)
+        <strong>Time to first token:</strong> ~1 second (embedding + Pinecone + Claude start). <strong>Full answer:</strong> ~2-3 seconds.
       </div>
     </div>
   </div>
@@ -812,7 +897,7 @@ class Chunk:
 </section>
 
 <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #666; font-size: 0.85rem;">
-  LegacyLens for NASTRAN-95 &mdash; Built with FastAPI, React, Pinecone, OpenAI, Claude
+  CODEX-95 &mdash; Built with FastAPI, React, D3.js, Three.js, Pinecone, OpenAI, Claude
 </footer>
 
 </body>

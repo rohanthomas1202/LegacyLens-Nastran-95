@@ -51,6 +51,12 @@ class EntityRequest(BaseModel):
     top_k: int = 5
 
 
+class ModernizeRequest(BaseModel):
+    name: str
+    target_language: str
+    top_k: int = 5
+
+
 class FileRequest(BaseModel):
     file_path: str
 
@@ -180,6 +186,17 @@ def business_rules(req: EntityRequest):
         return extract_business_logic(req.name, req.top_k)
     except Exception as e:
         logger.error(f"Business rules failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/modernize")
+def modernize(req: ModernizeRequest):
+    """Translate Fortran code to a modern language."""
+    from backend.features.modernizer import modernize_code
+    try:
+        return modernize_code(req.name, req.target_language, req.top_k)
+    except Exception as e:
+        logger.error(f"Modernize failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

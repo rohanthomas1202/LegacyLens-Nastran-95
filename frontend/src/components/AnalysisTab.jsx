@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { apiPost, apiFetch } from '../api'
 import MarkdownContent from './MarkdownContent'
 import Autocomplete from './Autocomplete'
+import ModernizeModal from './ModernizeModal'
 
 const ENDPOINT_MAP = {
   explain: '/api/explain',
@@ -18,6 +19,9 @@ export default function AnalysisTab() {
   const [featureLoading, setFeatureLoading] = useState(false)
   const [deadCode, setDeadCode] = useState(null)
   const [deadCodeLoading, setDeadCodeLoading] = useState(false)
+  const [targetLanguage, setTargetLanguage] = useState('python')
+  const [modernizeResult, setModernizeResult] = useState(null)
+  const [modernizeLoading, setModernizeLoading] = useState(false)
 
   const handleFeature = async (feature) => {
     if (!entityName.trim()) return
@@ -32,6 +36,28 @@ export default function AnalysisTab() {
       setFeatureResult({ error: e.message })
     } finally {
       setFeatureLoading(false)
+    }
+  }
+
+  const handleModernize = async () => {
+    if (!entityName.trim()) return
+    setModernizeLoading(true)
+    try {
+      const data = await apiPost('/api/modernize', {
+        name: entityName,
+        target_language: targetLanguage,
+      })
+      if (data.error) {
+        setFeatureResult({ error: data.error })
+        setActiveFeature('modernize')
+      } else {
+        setModernizeResult(data)
+      }
+    } catch (e) {
+      setFeatureResult({ error: e.message })
+      setActiveFeature('modernize')
+    } finally {
+      setModernizeLoading(false)
     }
   }
 
@@ -63,6 +89,27 @@ export default function AnalysisTab() {
         <button onClick={() => handleFeature('patterns')} disabled={featureLoading}>Find Patterns</button>
         <button onClick={() => handleFeature('generate-docs')} disabled={featureLoading}>Generate Docs</button>
         <button onClick={() => handleFeature('business-rules')} disabled={featureLoading}>Extract Rules</button>
+      </div>
+
+      <div className="feature-buttons modernize-row">
+        <select
+          className="language-select"
+          value={targetLanguage}
+          onChange={(e) => setTargetLanguage(e.target.value)}
+          disabled={modernizeLoading}
+        >
+          <option value="python">Python</option>
+          <option value="c">C</option>
+          <option value="java">Java</option>
+          <option value="rust">Rust</option>
+        </select>
+        <button
+          onClick={handleModernize}
+          disabled={modernizeLoading}
+          className="modernize-btn"
+        >
+          {modernizeLoading ? 'Translating...' : 'Modernize Code'}
+        </button>
       </div>
 
       <div className="feature-buttons" style={{ marginBottom: 12 }}>
@@ -190,6 +237,11 @@ export default function AnalysisTab() {
       )}
 
       {deadCode?.error && <div className="error-msg">Error: {deadCode.error}</div>}
+
+      <ModernizeModal
+        result={modernizeResult}
+        onClose={() => setModernizeResult(null)}
+      />
     </div>
   )
 }
