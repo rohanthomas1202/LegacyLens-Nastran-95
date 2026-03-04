@@ -2,6 +2,8 @@ import { useState, lazy, Suspense } from 'react'
 import { apiPost } from './api'
 import QueryTab from './components/QueryTab'
 import AnalysisTab from './components/AnalysisTab'
+import ModernizeTab from './components/ModernizeTab'
+import InsightsTab from './components/InsightsTab'
 import StatsTab from './components/StatsTab'
 import FileModal from './components/FileModal'
 import NeonStatusIndicator from './components/NeonStatusIndicator'
@@ -10,6 +12,8 @@ import './App.css'
 
 const DependencyGraph = lazy(() => import('./components/DependencyGraph'))
 const CodeFlowTracer = lazy(() => import('./components/CodeFlowTracer'))
+const ImpactPanel = lazy(() => import('./components/ImpactPanel'))
+const CallSimulator = lazy(() => import('./components/CallSimulator'))
 
 export default function App() {
   const [tab, setTab] = useState('query')
@@ -36,7 +40,9 @@ export default function App() {
         <div className="nav-links">
           <button className={tab === 'query' ? 'active' : ''} onClick={() => setTab('query')}>Query</button>
           <button className={tab === 'analysis' ? 'active' : ''} onClick={() => setTab('analysis')}>Analysis</button>
-          {/* Graph tab hidden until backend graph endpoints are stable */}
+          <button className={tab === 'modernize' ? 'active' : ''} onClick={() => setTab('modernize')}>Modernize</button>
+          <button className={tab === 'graph' ? 'active' : ''} onClick={() => setTab('graph')}>Graph</button>
+          <button className={tab === 'insights' ? 'active' : ''} onClick={() => setTab('insights')}>Insights</button>
           <button className={tab === 'stats' ? 'active' : ''} onClick={() => setTab('stats')}>Dashboard</button>
         </div>
 
@@ -59,12 +65,19 @@ export default function App() {
         <main className="content">
           {tab === 'query' && <QueryTab onViewFile={loadFullFile} />}
           {tab === 'analysis' && <AnalysisTab />}
+          {tab === 'modernize' && <ModernizeTab />}
           {tab === 'graph' && (
             <Suspense fallback={<div className="loading">Initializing graph engine...</div>}>
               <DependencyGraph />
+              <div className="analysis-divider" />
               <CodeFlowTracer onSwitchToGraph={(name) => setTab('graph')} />
+              <div className="analysis-divider" />
+              <ImpactPanel />
+              <div className="analysis-divider" />
+              <CallSimulator />
             </Suspense>
           )}
+          {tab === 'insights' && <InsightsTab />}
           {tab === 'stats' && <StatsTab />}
         </main>
       </div>

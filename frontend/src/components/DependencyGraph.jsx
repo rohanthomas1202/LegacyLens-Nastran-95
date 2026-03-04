@@ -475,7 +475,7 @@ export default function DependencyGraph() {
 
       {graphData && (
         <div className="graph-info">
-          <span>{graphData.node_count} nodes{graphData.truncated ? ' (capped)' : ''}</span>
+          <span>{graphData.node_count} nodes</span>
           <span>{graphData.edge_count} edges</span>
           <span style={{ opacity: 0.5 }}>
             {is3D ? 'Drag to orbit · Ctrl+scroll to zoom' : 'Ctrl+scroll to zoom · Drag to pan'}

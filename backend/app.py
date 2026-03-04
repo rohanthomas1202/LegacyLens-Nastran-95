@@ -319,6 +319,123 @@ def dead_code():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ---------- COMMON Blocks ----------
+
+@app.get("/api/common-blocks")
+def common_blocks():
+    """Inspect all COMMON blocks and their shared routines."""
+    from backend.features.common_blocks import get_common_blocks
+    try:
+        return get_common_blocks()
+    except Exception as e:
+        logger.error(f"Common blocks failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Impact Analysis ----------
+
+class ImpactRequest(BaseModel):
+    name: str
+    max_depth: int = 5
+
+
+@app.post("/api/impact")
+def impact(req: ImpactRequest):
+    """Analyze impact of changing a routine."""
+    from backend.features.impact_analyzer import analyze_impact
+    try:
+        return analyze_impact(req.name, req.max_depth)
+    except Exception as e:
+        logger.error(f"Impact analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Complexity Metrics ----------
+
+class ComplexityRequest(BaseModel):
+    name: str = None
+    top_n: int = 20
+
+
+@app.post("/api/complexity")
+def complexity(req: ComplexityRequest):
+    """Compute code complexity metrics."""
+    from backend.features.complexity import get_complexity
+    try:
+        return get_complexity(req.name, req.top_n)
+    except Exception as e:
+        logger.error(f"Complexity failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Architecture Map ----------
+
+@app.get("/api/architecture")
+def architecture():
+    """Module-level architecture map."""
+    from backend.features.architecture import get_architecture
+    try:
+        return get_architecture()
+    except Exception as e:
+        logger.error(f"Architecture failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Variable Cross-Reference ----------
+
+class XrefRequest(BaseModel):
+    variable: str
+    limit: int = 50
+
+
+@app.post("/api/xref")
+def xref(req: XrefRequest):
+    """Cross-reference a variable across routines."""
+    from backend.features.xref import cross_reference
+    try:
+        return cross_reference(req.variable, req.limit)
+    except Exception as e:
+        logger.error(f"Xref failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Call Stack Simulator ----------
+
+class SimulateRequest(BaseModel):
+    entry_point: str
+    max_steps: int = 200
+
+
+@app.post("/api/simulate")
+def simulate(req: SimulateRequest):
+    """Simulate call stack execution from an entry point."""
+    from backend.features.call_simulator import simulate_calls
+    try:
+        return simulate_calls(req.entry_point, req.max_steps)
+    except Exception as e:
+        logger.error(f"Simulation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------- Batch Modernization ----------
+
+class BatchModernizeRequest(BaseModel):
+    names: list[str] = None
+    directory: str = None
+    target_language: str = "python"
+
+
+@app.post("/api/modernize/batch")
+def batch_modernize(req: BatchModernizeRequest):
+    """Batch modernize multiple routines with dependency ordering."""
+    from backend.features.batch_modernizer import batch_modernize
+    try:
+        return batch_modernize(req.names, req.directory, req.target_language)
+    except Exception as e:
+        logger.error(f"Batch modernize failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ---------- Streaming Query ----------
 
 @app.post("/api/query/stream")

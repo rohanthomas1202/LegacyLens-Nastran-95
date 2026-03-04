@@ -28,10 +28,18 @@ logs/
 # IDE
 .vscode/
 .idea/
+.cursor/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Debug / log files
+*.log
+
+# Test artifacts
+tests/evals/results_*.xml
+tests/evals/eval_report.json
 
 # Assignment PDF
 *.pdf
