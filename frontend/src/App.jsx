@@ -52,7 +52,7 @@ export default function App() {
         </div>
       </nav>
 
-      <div className={`app ${tab === 'graph' ? 'app-fullwidth' : ''}`}>
+      <div className={`app ${tab === 'graph' || tab === 'stats' ? 'app-fullwidth' : ''}`}>
         <div className="hero-section">
           <h1 className="hero-title">
             <span className="accent">CODEX</span>-95

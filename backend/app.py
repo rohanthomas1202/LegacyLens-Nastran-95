@@ -76,22 +76,28 @@ def query(req: QueryRequest):
     cost_tracker.track_query()
 
     try:
-        # Search
         results = semantic_search(
             req.query, top_k=req.top_k, language=req.language, file_path=req.file_path
         )
-
-        # Rerank
         reranked = rerank_results(results, req.query)
-
-        # Generate answer
         answer_data = generate_answer(req.query, reranked)
 
         elapsed = time.time() - start
+        latency_ms = round(elapsed * 1000)
+        top_score = max((r.get("score", 0) for r in reranked), default=0)
+        query_cost = (
+            (answer_data.get("input_tokens", 0) / 1_000_000) * 3.0
+            + (answer_data.get("output_tokens", 0) / 1_000_000) * 15.0
+        )
+        cost_tracker.track_query_detail(
+            query=req.query, mode="query", latency_ms=latency_ms,
+            cost=query_cost, top_score=top_score, chunks_count=len(reranked),
+        )
+
         return {
             "answer": answer_data["answer"],
             "sources": reranked,
-            "query_time_ms": round(elapsed * 1000),
+            "query_time_ms": latency_ms,
             "input_tokens": answer_data["input_tokens"],
             "output_tokens": answer_data["output_tokens"],
         }
@@ -138,8 +144,16 @@ def ingest(req: IngestRequest):
 def explain(req: EntityRequest):
     """Explain a code entity in plain English."""
     from backend.features.code_explainer import explain_code
+    start = time.time()
     try:
-        return explain_code(req.name, req.top_k)
+        result = explain_code(req.name, req.top_k)
+        elapsed_ms = round((time.time() - start) * 1000)
+        top_score = max((s.get("score", 0) for s in result.get("sources", [])), default=0)
+        CostTracker().track_query_detail(
+            query=req.name, mode="explain", latency_ms=elapsed_ms,
+            cost=0, top_score=top_score, chunks_count=len(result.get("sources", [])),
+        )
+        return result
     except Exception as e:
         logger.error(f"Explain failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -149,8 +163,15 @@ def explain(req: EntityRequest):
 def dependencies(req: EntityRequest):
     """Map dependencies of a code entity."""
     from backend.features.dependency_mapper import map_dependencies
+    start = time.time()
     try:
-        return map_dependencies(req.name, req.top_k)
+        result = map_dependencies(req.name, req.top_k)
+        elapsed_ms = round((time.time() - start) * 1000)
+        CostTracker().track_query_detail(
+            query=req.name, mode="dependencies", latency_ms=elapsed_ms,
+            cost=0, top_score=0, chunks_count=0,
+        )
+        return result
     except Exception as e:
         logger.error(f"Dependencies failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -160,8 +181,16 @@ def dependencies(req: EntityRequest):
 def patterns(req: EntityRequest):
     """Find similar code patterns."""
     from backend.features.pattern_detector import detect_patterns
+    start = time.time()
     try:
-        return detect_patterns(req.name, req.top_k)
+        result = detect_patterns(req.name, req.top_k)
+        elapsed_ms = round((time.time() - start) * 1000)
+        top_score = max((p.get("score", 0) for p in result.get("patterns", [])), default=0)
+        CostTracker().track_query_detail(
+            query=req.name, mode="patterns", latency_ms=elapsed_ms,
+            cost=0, top_score=top_score, chunks_count=len(result.get("patterns", [])),
+        )
+        return result
     except Exception as e:
         logger.error(f"Patterns failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -171,8 +200,16 @@ def patterns(req: EntityRequest):
 def generate_docs(req: EntityRequest):
     """Generate documentation for a code entity."""
     from backend.features.doc_generator import generate_documentation
+    start = time.time()
     try:
-        return generate_documentation(req.name, req.top_k)
+        result = generate_documentation(req.name, req.top_k)
+        elapsed_ms = round((time.time() - start) * 1000)
+        top_score = max((s.get("score", 0) for s in result.get("sources", [])), default=0)
+        CostTracker().track_query_detail(
+            query=req.name, mode="docgen", latency_ms=elapsed_ms,
+            cost=0, top_score=top_score, chunks_count=len(result.get("sources", [])),
+        )
+        return result
     except Exception as e:
         logger.error(f"Doc generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -193,8 +230,15 @@ def business_rules(req: EntityRequest):
 def modernize(req: ModernizeRequest):
     """Translate Fortran code to a modern language."""
     from backend.features.modernizer import modernize_code
+    start = time.time()
     try:
-        return modernize_code(req.name, req.target_language, req.top_k)
+        result = modernize_code(req.name, req.target_language, req.top_k)
+        elapsed_ms = round((time.time() - start) * 1000)
+        CostTracker().track_query_detail(
+            query=req.name, mode="translate", latency_ms=elapsed_ms,
+            cost=0, top_score=0, chunks_count=0,
+        )
+        return result
     except Exception as e:
         logger.error(f"Modernize failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -202,13 +246,47 @@ def modernize(req: ModernizeRequest):
 
 @app.get("/api/stats")
 def stats():
-    """Return index stats and cost tracking."""
+    """Return index stats, cost tracking, and enriched dashboard metrics."""
     try:
         store = PineconeStore()
         index_stats = store.get_stats()
         cost_tracker = CostTracker()
-        costs = cost_tracker.get_costs()
-        return {"index": index_stats, "costs": costs}
+        dashboard = cost_tracker.get_dashboard_stats()
+
+        files_covered = 0
+        try:
+            from backend.features.graph_builder import load_or_build_graph
+            graph = load_or_build_graph()
+            files_covered = len({info.get("file", "") for info in graph.nodes.values() if info.get("file")})
+        except Exception:
+            pass
+
+        return {
+            "index": index_stats,
+            "costs": {
+                "embedding_tokens": dashboard["embedding_tokens"],
+                "llm_input_tokens": dashboard["llm_input_tokens"],
+                "llm_output_tokens": dashboard["llm_output_tokens"],
+                "embedding_cost": dashboard["embedding_cost"],
+                "llm_input_cost": dashboard["llm_input_cost"],
+                "llm_output_cost": dashboard["llm_output_cost"],
+                "total_cost": dashboard["total_cost"],
+                "query_count": dashboard["query_count"],
+                "ingestion_count": dashboard["ingestion_count"],
+                "last_updated": dashboard["last_updated"],
+            },
+            "dashboard": {
+                "total_tokens": dashboard["total_tokens"],
+                "avg_latency": dashboard["avg_latency"],
+                "avg_score": dashboard["avg_score"],
+                "satisfaction": dashboard["satisfaction"],
+                "files_covered": files_covered,
+                "score_distribution": dashboard["score_distribution"],
+                "usage_by_mode": dashboard["usage_by_mode"],
+                "latency_series": dashboard["latency_series"],
+                "recent_queries": dashboard["recent_queries"],
+            },
+        }
     except Exception as e:
         logger.error(f"Stats failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
